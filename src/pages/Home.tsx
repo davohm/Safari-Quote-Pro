@@ -42,7 +42,7 @@ export function Home() {
 
   return (
     <div>
-      <Header title="Welcome to QuoteGen" />
+      <Header title="Welcome to SafariQuote Pro" />
 
       <div className="p-8">
         <div className="mb-8">

@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Layout } from './components/Layout';
+import { CompanyProvider } from './contexts/CompanyContext';
 import { Home } from './pages/Home';
 import { Dashboard } from './pages/Dashboard';
 import { QuotationForm } from './pages/QuotationForm';
@@ -10,8 +11,9 @@ import { Company } from './pages/Company';
 function App() {
   return (
     <BrowserRouter>
-      <Layout>
-        <Routes>
+      <CompanyProvider>
+        <Layout>
+          <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/dashboard" element={<Home />} />
           <Route path="/quotations" element={<Dashboard />} />
@@ -27,6 +29,7 @@ function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Layout>
+    </CompanyProvider>
     </BrowserRouter>
   );
 }

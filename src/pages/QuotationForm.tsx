@@ -4,6 +4,7 @@ import { Plus, Trash2, Save, FileDown } from 'lucide-react';
 import { Header } from '../components/Header';
 import { useClients } from '../hooks/useClients';
 import { useCompanies } from '../hooks/useCompanies';
+import { useCompanyContext } from '../contexts/CompanyContext';
 import {
   createQuotation,
   updateQuotation,
@@ -25,12 +26,13 @@ export function QuotationForm() {
   const navigate = useNavigate();
   const isEditMode = !!id;
 
+  const { currentCompany } = useCompanyContext();
   const { quotation, loading: quotationLoading } = useQuotation(id || '');
   const { clients, loading: clientsLoading } = useClients();
   const { companies, loading: companiesLoading } = useCompanies();
 
   const [formData, setFormData] = useState({
-    company_id: '',
+    company_id: currentCompany?.id || '',
     client_id: '',
     issue_date: new Date().toISOString().split('T')[0],
     valid_until: '',
@@ -52,10 +54,12 @@ export function QuotationForm() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (!isEditMode) {
-      generateQuoteNumber().then(setQuoteNumber);
+    if (!isEditMode && currentCompany) {
+      generateQuoteNumber(currentCompany.id).then(setQuoteNumber);
+      // Update formData with current company when it changes
+      setFormData(prev => ({ ...prev, company_id: currentCompany.id }));
     }
-  }, [isEditMode]);
+  }, [isEditMode, currentCompany]);
 
   useEffect(() => {
     if (quotation && isEditMode) {
@@ -154,8 +158,10 @@ export function QuotationForm() {
 
       if (isEditMode && id) {
         await updateQuotation(id, quotationData, items);
+      } else if (currentCompany) {
+        await createQuotation(quotationData, items, currentCompany.id);
       } else {
-        await createQuotation(quotationData, items);
+        throw new Error('No company selected');
       }
 
       navigate('/quotations');

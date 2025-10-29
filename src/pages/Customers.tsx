@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { Plus, Edit, Trash2, X } from 'lucide-react';
 import { Header } from '../components/Header';
 import { useClients, createClient, updateClient, deleteClient } from '../hooks/useClients';
+import { useCompanyContext } from '../contexts/CompanyContext';
 import { Client } from '../types';
 
 export function Customers() {
+  const { currentCompany } = useCompanyContext();
   const { clients, loading, refetch } = useClients();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
@@ -68,11 +70,15 @@ export function Customers() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!currentCompany) {
+      alert('No company selected');
+      return;
+    }
     try {
       if (editingClient) {
         await updateClient(editingClient.id, formData);
       } else {
-        await createClient(formData);
+        await createClient(formData, currentCompany.id);
       }
       refetch();
       closeModal();

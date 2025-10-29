@@ -1,13 +1,20 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Quotation, QuotationItem } from '../types';
+import { useCompanyContext } from '../contexts/CompanyContext';
 
 export function useQuotations() {
   const [quotations, setQuotations] = useState<Quotation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { currentCompany } = useCompanyContext();
 
   const fetchQuotations = async () => {
+    if (!currentCompany) {
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       const { data, error } = await supabase
@@ -17,6 +24,7 @@ export function useQuotations() {
           company:companies(*),
           client:clients(*)
         `)
+        .eq('company_id', currentCompany.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -30,14 +38,15 @@ export function useQuotations() {
 
   useEffect(() => {
     fetchQuotations();
-  }, []);
+  }, [currentCompany?.id]);
 
   return { quotations, loading, error, refetch: fetchQuotations };
 }
 
 export function useQuotation(id: string) {
   const [quotation, setQuotation] = useState<Quotation | null>(null);
-  const [loading, setLoading] = useState(true);
+  // Fix: Initialize loading as false for new quotations (empty id)
+  const [loading, setLoading] = useState(!!id);
   const [error, setError] = useState<string | null>(null);
 
   const fetchQuotation = async () => {
@@ -64,18 +73,24 @@ export function useQuotation(id: string) {
   };
 
   useEffect(() => {
+    // Only fetch data when there's an actual ID
     if (id) {
       fetchQuotation();
+    } else {
+      // Reset state for new quotation
+      setQuotation(null);
+      setLoading(false);
+      setError(null);
     }
   }, [id]);
 
   return { quotation, loading, error, refetch: fetchQuotation };
 }
 
-export async function createQuotation(quotation: Partial<Quotation>, items: Omit<QuotationItem, 'id' | 'quotation_id' | 'created_at'>[]) {
+export async function createQuotation(quotation: Partial<Quotation>, items: Omit<QuotationItem, 'id' | 'quotation_id' | 'created_at'>[], companyId: string) {
   const { data: quoteData, error: quoteError } = await supabase
     .from('quotations')
-    .insert(quotation)
+    .insert({ ...quotation, company_id: companyId })
     .select()
     .single();
 
@@ -130,10 +145,11 @@ export async function deleteQuotation(id: string) {
   if (error) throw error;
 }
 
-export async function generateQuoteNumber(prefix: string = 'QT-'): Promise<string> {
+export async function generateQuoteNumber(companyId: string, prefix: string = 'QT-'): Promise<string> {
   const { data, error } = await supabase
     .from('quotations')
     .select('quote_number')
+    .eq('company_id', companyId)
     .like('quote_number', `${prefix}%`)
     .order('created_at', { ascending: false })
     .limit(1)

@@ -1,8 +1,8 @@
-# QuoteGen - Quotation Generator Setup Guide
+# SafariQuote Pro - Quotation Generator Setup Guide
 
 ## Overview
 
-QuoteGen is a comprehensive quotation management system that allows you to create, manage, and export professional quotations as PDF documents. Built with React, TypeScript, Tailwind CSS, and Supabase.
+SafariQuote Pro is a comprehensive quotation management system that allows you to create, manage, and export professional quotations as PDF documents. Built with React, TypeScript, Tailwind CSS, and Supabase.
 
 ## Features
 
